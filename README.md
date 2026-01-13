@@ -23,7 +23,7 @@ Copy all the workflow files to your repository:
 │       └── update-did-service.php
 └── workflows/
     ├── fair-publish.yml
-    └── release.yml  # (you should already have this)
+    └── fair-release.yml  # (you should already have this)
 ```
 
 Commit and push these files:
@@ -128,7 +128,7 @@ This step is only needed once. Future publishes will automatically use this stor
 
 When you create a release, here's the full flow:
 
-1. **Release Workflow** (`release.yml`) runs:
+1. **Release Workflow** (`fair-release.yml`) runs:
    - Builds plugin ZIP
    - Creates GitHub release
    - Uploads ZIP as release asset
@@ -153,7 +153,7 @@ When you create a release, here's the full flow:
 
 The workflow runs in two scenarios:
 
-1. **Automatically after release** - Triggers when the `release.yml` workflow completes successfully (when a new tag is pushed)
+1. **Automatically after release** - Triggers when the `fair-release.yml` workflow completes successfully (when a new tag is pushed)
 2. **Manual dispatch** - Can be manually triggered from the Actions tab with an optional version parameter
 
 #### Cryptographic Keys
@@ -177,7 +177,7 @@ The workflow creates a PLC DID (Decentralized Identifier) for your package:
 #### Package Signing and Publishing
 
 For each release:
-1. Downloads the release ZIP created by `release.yml`
+1. Downloads the release ZIP created by `fair-release.yml`
 2. Calculates SHA-256 checksum
 3. Signs the package with the verification key
 4. Generates FAIR-compliant `metadata.json`
@@ -190,7 +190,7 @@ Before following the setup steps above, ensure you have:
 - A WordPress plugin with a main plugin file containing standard headers
 - A GitHub repository with releases enabled
 - PHP installed locally (for key generation)
-- The `release.yml` workflow (or similar) that creates releases from tags
+- The `fair-release.yml` workflow (or similar) that creates releases from tags
 
 ### Manual Publishing (Optional)
 
@@ -230,7 +230,7 @@ The workflow requires these secrets and variables:
 
 The workflow runs automatically whenever:
 - You push a new tag (e.g., `v1.0.0`)
-- The `release.yml` workflow completes successfully
+- The `fair-release.yml` workflow completes successfully
 
 No manual intervention required after initial setup!
 
@@ -355,7 +355,7 @@ Ensure:
 │   └── update-did-service.php # DID service updates
 └── workflows/
     ├── fair-publish.yml   # Main FAIR publishing workflow
-    └── release.yml        # GitHub release creation
+    └── fair-release.yml        # GitHub release creation
 ```
 
 ## Security Considerations
