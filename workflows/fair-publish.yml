@@ -60,8 +60,12 @@ jobs:
 
       - name: Clone FAIR DID Manager
         run: |
-          git clone --branch initial-implementation --depth 1 \
+          git clone --depth 1 \
             https://github.com/fairpm/did-manager.git /tmp/did-manager
+          cd /tmp/did-manager
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          git checkout $LATEST_TAG
 
       - name: Install DID Manager dependencies
         working-directory: /tmp/did-manager
@@ -105,7 +109,7 @@ jobs:
           PLUGIN_NAME="${{ github.event.repository.name }}"
           ARTIFACT_PATH="/tmp/${PLUGIN_NAME}.zip"
 
-          # Download the release asset created by release.yml
+          # Download the release asset created by fair-release.yml
           gh release download "${VERSION}" -p "${PLUGIN_NAME}.zip" -O "${ARTIFACT_PATH}"
 
           echo "artifact_path=${ARTIFACT_PATH}" >> $GITHUB_OUTPUT
@@ -143,7 +147,7 @@ jobs:
           cat /tmp/fair-metadata.json | jq .
           echo "::endgroup::"
 
-          # Upload to the existing release created by release.yml
+          # Upload to the existing release created by fair-release.yml
           gh release upload "${VERSION}" /tmp/fair-metadata.json --clobber
 
           METADATA_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${VERSION}/fair-metadata.json"
