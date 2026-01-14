@@ -1,6 +1,6 @@
 # FAIR Repository Publishing Workflow
 
-This GitHub Actions workflow automatically publishes your WordPress plugin to a FAIR (Federated Asset Integrity Registry) repository, implementing the [FAIR Protocol](https://github.com/fairpm/fair-protocol) for decentralized package management.
+This GitHub Actions workflow automatically publishes your WordPress plugin to a FAIR repository, implementing the [FAIR Protocol](https://github.com/fairpm/fair-protocol) for decentralized package management.
 
 ## Quick Start: Publish Your Plugin to FAIR in 5 Steps
 
