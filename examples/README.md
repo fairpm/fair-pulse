@@ -4,7 +4,7 @@ This folder contains copy-ready examples for integrating the FAIR Publish action
 
 ## Included
 
-- `.github/workflows/example.yml` - End-to-end example that creates a release ZIP and publishes FAIR metadata.
+- `example.yml` - End-to-end example that creates a release ZIP and publishes FAIR metadata.
 
 ## Notes
 
