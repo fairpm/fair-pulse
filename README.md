@@ -146,6 +146,43 @@ Supporting action entrypoints:
 - src/actions/GenerateMetadataAction.php
 - src/actions/UpdateDidServiceAction.php
 
+## Local execution (Docker)
+
+Build local image:
+
+```bash
+docker build -t fair-pulse-local .
+```
+
+Generate key pairs locally in Docker:
+
+```bash
+docker run --rm -it fair-pulse-local php src/actions/GenerateKeysLocalAction.php
+```
+
+Run full publish flow locally in Docker:
+
+```bash
+docker run --rm -it \
+  -e GITHUB_REPOSITORY=owner/repo \
+  -e GITHUB_SERVER_URL=https://github.com \
+  -e GITHUB_TOKEN=ghp_xxx \
+  -e INPUT_VERSION=v1.2.3 \
+  -e INPUT_ARTIFACT_NAME=plugin.zip \
+  -e FAIR_ROTATION_KEY_PRIVATE=... \
+  -e FAIR_ROTATION_KEY_PUBLIC=... \
+  -e FAIR_VERIFICATION_KEY_PRIVATE=... \
+  -e FAIR_VERIFICATION_KEY_PUBLIC=... \
+  -e FAIR_DID=did:plc:optionalExistingDid \
+  fair-pulse-local
+```
+
+Notes:
+
+- Key generation must still be done locally (never in GitHub-hosted workflow runtime).
+- For publish flow, GITHUB_TOKEN needs permission to read/upload release assets.
+- INPUT_ARTIFACT_NAME must match the release asset name in GitHub.
+
 ## Development check
 
 ```bash
