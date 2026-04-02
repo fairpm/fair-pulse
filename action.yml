@@ -1,4 +1,4 @@
-name: FAIR Publish
+name: FAIR Pulse
 description: Publish WordPress plugin release artifacts to FAIR with DID, signing, and metadata generation.
 author: fairpm
 branding:
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   version:
-    description: Release version tag to publish (example: v1.2.3). If omitted, resolves from tag context or latest git tag.
+    description: Release version tag to publish (example v1.2.3). If omitted, resolves from tag context or latest git tag.
     required: false
     default: ''
   artifact-name:
@@ -26,16 +26,16 @@ inputs:
 outputs:
   version:
     description: Published release version.
-    value: ${{ steps.publish.outputs.version }}
+    value: ${{ steps.pulse.outputs.version }}
   did:
     description: DID used during publish.
-    value: ${{ steps.publish.outputs.did }}
+    value: ${{ steps.pulse.outputs.did }}
   artifact-path:
     description: Local path to downloaded release artifact.
-    value: ${{ steps.publish.outputs.artifact_path }}
+    value: ${{ steps.pulse.outputs.artifact_path }}
   metadata-path:
     description: Local path to generated FAIR metadata file.
-    value: ${{ steps.publish.outputs.metadata_path }}
+    value: ${{ steps.pulse.outputs.metadata_path }}
 
 runs:
   using: composite
@@ -53,8 +53,8 @@ runs:
         cd "${{ github.action_path }}"
         composer install --no-dev --prefer-dist --no-progress --no-interaction
 
-    - name: Run FAIR publish
-      id: publish
+    - name: Run FAIR Pulse
+      id: pulse
       shell: bash
       run: php "${{ github.action_path }}/src/actions/PublishFairAction.php"
       env:

@@ -1,4 +1,4 @@
-name: FAIR Publish Example
+name: FAIR Pulse Example
 
 on:
   push:

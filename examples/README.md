@@ -1,6 +1,6 @@
 # FAIR Pulse Examples
 
-This folder contains copy-ready examples for integrating the FAIR Publish action.
+This folder contains copy-ready examples for integrating the FAIR Pulse action.
 
 ## Included
 

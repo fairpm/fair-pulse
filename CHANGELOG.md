@@ -26,5 +26,5 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
-- Initial production-ready FAIR Publish GitHub Action release.
+- Initial production-ready FAIR Pulse GitHub Action release.
 - DID creation/update, artifact signing, FAIR metadata generation, and release upload flow.

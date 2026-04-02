@@ -1,6 +1,6 @@
 {
     "name": "fairpm/fair-pulse",
-    "description": "FAIR publishing scripts and GitHub Action tooling",
+    "description": "FAIR Pulse - GitHub Action tooling",
     "type": "project",
     "autoload": {
         "psr-4": {

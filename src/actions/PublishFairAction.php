@@ -20,7 +20,7 @@ final class PublishFairAction
     public function run(): int
     {
         try {
-            $this->runtime->logger()->group('FAIR Publish Action');
+            $this->runtime->logger()->group('FAIR Pulse Action');
 
             $repo = $this->requireEnv('GITHUB_REPOSITORY', 'GITHUB_REPOSITORY is required');
             $serverUrl = $this->requireEnv('GITHUB_SERVER_URL', 'GITHUB_SERVER_URL is required');
@@ -133,7 +133,7 @@ final class PublishFairAction
             $this->runtime->output()->write('artifact_path', $artifactPath);
             $this->runtime->output()->write('metadata_path', $metadataPath);
 
-            $this->runtime->logger()->notice('FAIR publish completed successfully.');
+            $this->runtime->logger()->notice('FAIR Pulse completed successfully.');
             $this->runtime->logger()->endGroup();
 
             return 0;

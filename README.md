@@ -1,4 +1,4 @@
-# FAIR Publish GitHub Action
+# FAIR Pulse GitHub Action
 
 This action publishes a WordPress plugin release artifact to FAIR.
 
