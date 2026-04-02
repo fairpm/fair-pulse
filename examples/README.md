@@ -6,6 +6,14 @@ This folder contains copy-ready examples for integrating the FAIR Publish action
 
 - `example.yml` - End-to-end example that creates a release ZIP and publishes FAIR metadata.
 
+## Apply in your repository
+
+Copy `examples/example.yml` into your repository workflows folder, for example:
+
+```bash
+cp examples/example.yml .github/workflows/fair-publish.yml
+```
+
 ## Notes
 
 - Generate keys locally first:
