@@ -28,7 +28,7 @@ final class GenerateMetadataScriptTest extends TestCase
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-output-');
 
         $result = ScriptRunner::run(
-            __DIR__ . '/../scripts/fair/generate-metadata.php',
+            __DIR__ . '/../bin/fair/generate-metadata.php',
             [
                 'GITHUB_OUTPUT' => $outputFile,
                 'GITHUB_WORKSPACE' => $workspaceDir,

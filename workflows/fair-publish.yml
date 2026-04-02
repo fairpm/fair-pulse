@@ -79,7 +79,7 @@ jobs:
           FAIR_VERIFICATION_KEY_PRIVATE: ${{ secrets.FAIR_VERIFICATION_KEY_PRIVATE }}
           FAIR_VERIFICATION_KEY_PUBLIC: ${{ secrets.FAIR_VERIFICATION_KEY_PUBLIC }}
           FAIR_DID: ${{ vars.FAIR_DID }}
-        run: php .github/scripts/fair/manage-keys.php
+        run: php bin/fair/manage-keys.php
 
       - name: Fail if keys need to be added (manual setup required)
         if: steps.keys.outputs.keys_exist == 'false'
@@ -98,7 +98,7 @@ jobs:
           EXISTING_DID: ${{ steps.keys.outputs.did }}
           DID_EXISTS: ${{ steps.keys.outputs.did_exists }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-        run: php .github/scripts/fair/create-did.php
+        run: php bin/fair/create-did.php
 
       - name: Download release asset
         id: download
@@ -121,7 +121,7 @@ jobs:
           VERIFICATION_PRIVATE: ${{ steps.keys.outputs.verification_private }}
           VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
           ARTIFACT_PATH: ${{ steps.download.outputs.artifact_path }}
-        run: php .github/scripts/fair/sign-artifact.php
+        run: php bin/fair/sign-artifact.php
 
       - name: Generate FAIR metadata
         id: metadata
@@ -133,7 +133,7 @@ jobs:
           ARTIFACT_PATH: ${{ steps.download.outputs.artifact_path }}
           VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-        run: php .github/scripts/fair/generate-metadata.php
+        run: php bin/fair/generate-metadata.php
 
       - name: Upload metadata to existing release
         if: github.event_name == 'workflow_run'
@@ -161,5 +161,5 @@ jobs:
           VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
           METADATA_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/fair-metadata.json
           PREV_CID: ${{ steps.did.outputs.cid }}
-        run: php .github/scripts/fair/update-did-service.php
+        run: php bin/fair/update-did-service.php
 

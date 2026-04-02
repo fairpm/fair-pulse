@@ -14,7 +14,7 @@ final class CreateDidScriptTest extends TestCase
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-output-');
 
         $result = ScriptRunner::run(
-            __DIR__ . '/../scripts/fair/create-did.php',
+            __DIR__ . '/../bin/fair/create-did.php',
             [
                 'GITHUB_OUTPUT' => $outputFile,
                 'ROTATION_PRIVATE' => 'rotation-private',
