@@ -1,0 +1,17 @@
+{
+    "name": "fairpm/fair-pulse",
+    "description": "FAIR publishing scripts and GitHub Action tooling",
+    "type": "project",
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "FairPulse\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    }
+}
