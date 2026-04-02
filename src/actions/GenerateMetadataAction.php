@@ -48,3 +48,10 @@ final class GenerateMetadataAction
         }
     }
 }
+
+if (PHP_SAPI === 'cli' && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
+    require_once __DIR__ . '/../bootstrap.php';
+
+    $action = new GenerateMetadataAction(new \FairPulse\Core\ActionRuntime());
+    exit($action->run());
+}

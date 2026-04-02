@@ -17,7 +17,7 @@ final class SignArtifactScriptTest extends TestCase
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-output-');
 
         $result = ScriptRunner::run(
-            __DIR__ . '/../bin/fair/sign-artifact.php',
+            __DIR__ . '/../src/actions/SignArtifactAction.php',
             [
                 'GITHUB_OUTPUT' => $outputFile,
                 'VERIFICATION_PRIVATE' => 'verification-private',

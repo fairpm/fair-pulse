@@ -24,7 +24,7 @@ final class ManageKeysAction
             $this->runtime->logger()->error('');
             $this->runtime->logger()->error('INSTRUCTIONS:');
             $this->runtime->logger()->error('1. Clone this repository to your local machine');
-            $this->runtime->logger()->error('2. Run: php bin/fair/generate-keys-local.php');
+            $this->runtime->logger()->error('2. Run: php src/actions/GenerateKeysLocalAction.php');
             $this->runtime->logger()->error('3. Copy the generated keys to GitHub Secrets');
             $this->runtime->logger()->error('4. Re-run this workflow');
             $this->runtime->logger()->error('');
@@ -50,4 +50,11 @@ final class ManageKeysAction
 
         return 0;
     }
+}
+
+if (PHP_SAPI === 'cli' && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
+    require_once __DIR__ . '/../bootstrap.php';
+
+    $action = new ManageKeysAction(new \FairPulse\Core\ActionRuntime());
+    exit($action->run());
 }

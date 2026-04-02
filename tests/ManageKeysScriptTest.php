@@ -14,7 +14,7 @@ final class ManageKeysScriptTest extends TestCase
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-output-');
 
         $result = ScriptRunner::run(
-            __DIR__ . '/../bin/fair/manage-keys.php',
+            __DIR__ . '/../src/actions/ManageKeysAction.php',
             [
                 'GITHUB_OUTPUT' => $outputFile,
             ]
@@ -32,7 +32,7 @@ final class ManageKeysScriptTest extends TestCase
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-output-');
 
         $result = ScriptRunner::run(
-            __DIR__ . '/../bin/fair/manage-keys.php',
+            __DIR__ . '/../src/actions/ManageKeysAction.php',
             [
                 'GITHUB_OUTPUT' => $outputFile,
                 'FAIR_ROTATION_KEY_PRIVATE' => 'rotation-private',

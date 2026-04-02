@@ -85,3 +85,10 @@ final class GenerateKeysLocalAction
         $this->runtime->logger()->raw($secretValue . "\n\n");
     }
 }
+
+if (PHP_SAPI === 'cli' && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
+    require_once __DIR__ . '/../bootstrap.php';
+
+    $action = new GenerateKeysLocalAction(new \FairPulse\Core\ActionRuntime());
+    exit($action->run());
+}
