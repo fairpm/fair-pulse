@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -11,6 +12,8 @@ RUN apt-get update \
         gh \
         jq \
         php-cli \
+        php-curl \
+        php-gmp \
         unzip \
         zip \
     && rm -rf /var/lib/apt/lists/*
