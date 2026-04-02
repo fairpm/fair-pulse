@@ -6,7 +6,6 @@ namespace FairPulse\Actions;
 
 use FAIR\DID\Crypto\DidCodec;
 use FairPulse\Core\ActionRuntime;
-use FairPulse\Services\LocalDidManagerInstallerService;
 
 final class GenerateKeysLocalAction
 {
@@ -28,11 +27,13 @@ final class GenerateKeysLocalAction
             return 1;
         }
 
-        try {
-            $installer = new LocalDidManagerInstallerService($this->runtime->logger());
-            $autoloadPath = $installer->ensureInstalled();
-            require_once $autoloadPath;
+        if (!class_exists(DidCodec::class)) {
+            $this->runtime->logger()->raw("ERROR: FAIR DID manager dependency is missing.\n");
+            $this->runtime->logger()->raw("   Run: composer install\n\n");
+            return 1;
+        }
 
+        try {
             $this->runtime->logger()->raw("🔐 Generating cryptographic keys...\n\n");
 
             $rotationKey = DidCodec::generate_key_pair();
@@ -63,14 +64,14 @@ final class GenerateKeysLocalAction
             $this->runtime->logger()->raw("• They were NEVER uploaded to GitHub or any server\n");
             $this->runtime->logger()->raw("• Keep the PRIVATE keys secure - never share them\n");
             $this->runtime->logger()->raw("• After copying to GitHub Secrets, clear your terminal history\n");
-            $this->runtime->logger()->raw("• You can delete /tmp/did-manager after setup\n\n");
+            $this->runtime->logger()->raw("• Use composer.lock to keep crypto dependencies pinned\n\n");
             $this->runtime->logger()->raw("Once all secrets are added, run the workflow on GitHub!\n\n");
 
             return 0;
         } catch (\RuntimeException $exception) {
             $this->runtime->logger()->raw("ERROR: {$exception->getMessage()}\n\n");
             return 1;
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->runtime->logger()->raw("ERROR: Failed to generate keys.\n");
             $this->runtime->logger()->raw("   {$exception->getMessage()}\n\n");
             return 1;

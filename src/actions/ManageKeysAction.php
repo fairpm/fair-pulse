@@ -24,7 +24,8 @@ final class ManageKeysAction
             $this->runtime->logger()->error('');
             $this->runtime->logger()->error('INSTRUCTIONS:');
             $this->runtime->logger()->error('1. Clone this repository to your local machine');
-            $this->runtime->logger()->error('2. Run: php src/actions/GenerateKeysLocalAction.php');
+            $this->runtime->logger()->error('2. Run: composer fair:generate-keys-local');
+            $this->runtime->logger()->error('   (or: php src/actions/GenerateKeysLocalAction.php)');
             $this->runtime->logger()->error('3. Copy the generated keys to GitHub Secrets');
             $this->runtime->logger()->error('4. Re-run this workflow');
             $this->runtime->logger()->error('');

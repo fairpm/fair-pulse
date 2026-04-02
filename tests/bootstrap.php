@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+putenv('FAIR_TEST_STUB_DID_MANAGER=true');
+$_ENV['FAIR_TEST_STUB_DID_MANAGER'] = 'true';
+$_SERVER['FAIR_TEST_STUB_DID_MANAGER'] = 'true';
+
 function fairPulseInstallDidManagerStubs(): void
 {
     $vendorDir = '/tmp/did-manager/vendor';

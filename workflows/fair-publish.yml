@@ -38,13 +38,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@9e72090525849c5e82e596468b86eb55e9cc5401 # v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: curl, json, mbstring
-          coverage: none
-
       - name: Get version
         id: version
         run: |
@@ -58,108 +51,24 @@ jobs:
             echo "version=$(git describe --tags --abbrev=0 2>/dev/null || echo '0.0.1')" >> $GITHUB_OUTPUT
           fi
 
-      - name: Clone FAIR DID Manager
-        run: |
-          git clone --depth 1 \
-            https://github.com/fairpm/did-manager.git /tmp/did-manager
-          cd /tmp/did-manager
-          git fetch --tags
-          LATEST_TAG=$(git describe --tags --abbrev=0)
-          git checkout $LATEST_TAG
-
-      - name: Install DID Manager dependencies
-        working-directory: /tmp/did-manager
-        run: composer install --no-dev --prefer-dist --no-progress
-
-      - name: Check and setup cryptographic keys
-        id: keys
+      - name: Publish with FAIR action
+        id: fair
+        uses: ./
+        with:
+          version: ${{ steps.version.outputs.version }}
+          artifact-name: ${{ github.event.repository.name }}.zip
+          upload-metadata: 'true'
+          update-did-service: 'true'
         env:
           FAIR_ROTATION_KEY_PRIVATE: ${{ secrets.FAIR_ROTATION_KEY_PRIVATE }}
           FAIR_ROTATION_KEY_PUBLIC: ${{ secrets.FAIR_ROTATION_KEY_PUBLIC }}
           FAIR_VERIFICATION_KEY_PRIVATE: ${{ secrets.FAIR_VERIFICATION_KEY_PRIVATE }}
           FAIR_VERIFICATION_KEY_PUBLIC: ${{ secrets.FAIR_VERIFICATION_KEY_PUBLIC }}
           FAIR_DID: ${{ vars.FAIR_DID }}
-        run: php src/actions/ManageKeysAction.php
 
-      - name: Fail if keys need to be added (manual setup required)
-        if: steps.keys.outputs.keys_exist == 'false'
+      - name: Publish summary
         run: |
-          echo "Keys must be generated locally for security. See error above for instructions."
-          exit 1
-
-      - name: Create or update PLC DID
-        id: did
-        if: steps.keys.outputs.keys_exist == 'true'
-        env:
-          ROTATION_PRIVATE: ${{ steps.keys.outputs.rotation_private }}
-          ROTATION_PUBLIC: ${{ steps.keys.outputs.rotation_public }}
-          VERIFICATION_PRIVATE: ${{ steps.keys.outputs.verification_private }}
-          VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
-          EXISTING_DID: ${{ steps.keys.outputs.did }}
-          DID_EXISTS: ${{ steps.keys.outputs.did_exists }}
-          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-        run: php src/actions/CreateDidAction.php
-
-      - name: Download release asset
-        id: download
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          PLUGIN_NAME="${{ github.event.repository.name }}"
-          ARTIFACT_PATH="/tmp/${PLUGIN_NAME}.zip"
-
-          # Download the release asset created by fair-release.yml
-          gh release download "${VERSION}" -p "${PLUGIN_NAME}.zip" -O "${ARTIFACT_PATH}"
-
-          echo "artifact_path=${ARTIFACT_PATH}" >> $GITHUB_OUTPUT
-          echo "::notice::Downloaded release asset: ${ARTIFACT_PATH}"
-
-      - name: Sign package artifact
-        id: sign
-        env:
-          VERIFICATION_PRIVATE: ${{ steps.keys.outputs.verification_private }}
-          VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
-          ARTIFACT_PATH: ${{ steps.download.outputs.artifact_path }}
-        run: php src/actions/SignArtifactAction.php
-
-      - name: Generate FAIR metadata
-        id: metadata
-        env:
-          DID: ${{ steps.did.outputs.did }}
-          VERSION: ${{ steps.version.outputs.version }}
-          CHECKSUM: ${{ steps.sign.outputs.checksum }}
-          SIGNATURE: ${{ steps.sign.outputs.signature }}
-          ARTIFACT_PATH: ${{ steps.download.outputs.artifact_path }}
-          VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
-          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-        run: php src/actions/GenerateMetadataAction.php
-
-      - name: Upload metadata to existing release
-        if: github.event_name == 'workflow_run'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          echo "::group::Metadata Upload Debug"
-          echo "Uploading metadata for version: ${VERSION}"
-          echo "Metadata file contents:"
-          cat /tmp/fair-metadata.json | jq .
-          echo "::endgroup::"
-
-          # Upload to the existing release created by fair-release.yml
-          gh release upload "${VERSION}" /tmp/fair-metadata.json --clobber
-
-          METADATA_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${VERSION}/fair-metadata.json"
-          echo "::notice::Metadata uploaded to: ${METADATA_URL}"
-
-      - name: Update DID with FAIR service
-        env:
-          DID: ${{ steps.did.outputs.did }}
-          ROTATION_PRIVATE: ${{ steps.keys.outputs.rotation_private }}
-          ROTATION_PUBLIC: ${{ steps.keys.outputs.rotation_public }}
-          VERIFICATION_PUBLIC: ${{ steps.keys.outputs.verification_public }}
-          METADATA_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.version.outputs.version }}/fair-metadata.json
-          PREV_CID: ${{ steps.did.outputs.cid }}
-        run: php src/actions/UpdateDidServiceAction.php
+          echo "Published version: ${{ steps.fair.outputs.version }}"
+          echo "DID: ${{ steps.fair.outputs.did }}"
+          echo "Metadata path: ${{ steps.fair.outputs['metadata-path'] }}"
 
