@@ -263,14 +263,14 @@ final class PublishFairAction
 
         $mergedEnv = array_merge($_SERVER, $_ENV, $env, ['GITHUB_OUTPUT' => $outputFile]);
 
-        $command = [PHP_BINARY, $scriptPath];
+        $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($scriptPath);
         $descriptorSpec = [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
         ];
 
-        $process = proc_open($command, $descriptorSpec, $pipes, getcwd() ?: null, $mergedEnv);
+        $process = proc_open(['bash', '-c', $command], $descriptorSpec, $pipes, getcwd() ?: null, $mergedEnv);
         if (!is_resource($process)) {
             throw new \RuntimeException('Failed to start step: ' . $label);
         }
@@ -351,7 +351,7 @@ final class PublishFairAction
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
         ];
-        $process = proc_open(['bash', '-lc', $command], $descriptorSpec, $pipes, getcwd() ?: null);
+        $process = proc_open(['bash', '-c', $command], $descriptorSpec, $pipes, getcwd() ?: null);
         if (!is_resource($process)) {
             throw new \RuntimeException('Failed to start command: ' . $label);
         }
