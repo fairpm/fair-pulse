@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "release/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, gmp, json, mbstring
+          coverage: none
+
+      - name: Validate composer config
+        run: composer validate --no-check-publish
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: PHP syntax lint
+        shell: bash
+        run: |
+          find src tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, gmp, json, mbstring
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run unit/integration/e2e tests
+        run: composer test
+
+  build-validation:
+    name: Build Validation
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, gmp, json, mbstring
+          coverage: none
+
+      - name: Install production dependencies only
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress
+
+      - name: Validate action manifest presence
+        shell: bash
+        run: |
+          test -f action.yml
+          php -l src/actions/PublishFairAction.php
+
+      - name: Build local container image
+        run: docker build -t fair-pulse-ci .

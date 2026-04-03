@@ -1,0 +1,5 @@
+.git/
+.github/
+.local/
+.phpunit.cache/
+vendor/

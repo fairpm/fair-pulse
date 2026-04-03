@@ -1,396 +1,277 @@
-# FAIR Repository Publishing Workflow
+# FAIR Pulse GitHub Action
 
-This GitHub Actions workflow automatically publishes your WordPress plugin to a FAIR repository, implementing the [FAIR Protocol](https://github.com/fairpm/fair-protocol) for decentralized package management.
+This action publishes a WordPress plugin release artifact to FAIR.
 
-## Quick Start: Publish Your Plugin to FAIR in 5 Steps
+It handles:
 
-Follow these steps in order to publish your plugin to the FAIR repository:
+1. DID creation or reuse
+2. Artifact signing
+3. FAIR metadata generation
+4. Metadata upload to GitHub release
+5. DID service endpoint update
 
-### Step 1: Add Workflow Files to Your Repository
+## Before You Start
 
-Copy all the workflow files to your repository:
+You need:
 
-```bash
-# Your repository structure should look like this:
-.github/
-├── scripts/
-│   └── fair/
-│       ├── create-did.php
-│       ├── generate-keys-local.php
-│       ├── generate-metadata.php
-│       ├── manage-keys.php
-│       ├── sign-artifact.php
-│       └── update-did-service.php
-└── workflows/
-    ├── fair-publish.yml
-    └── fair-release.yml  # (you should already have this)
-```
+1. A GitHub repository with your plugin code
+2. A release ZIP asset (for example `my-plugin.zip`) attached to a GitHub release
+3. Permission to add repository secrets and variables
+4. Local PHP + Composer to generate keys
+5. Git installed locally
 
-Commit and push these files:
-```bash
-git add .github/
-git commit -m "Add FAIR publishing workflow"
-git push
-```
+## Step-By-Step Setup
 
-### Step 2: Generate Cryptographic Keys Locally
+### Step 1: Create a local working folder and clone this repo
 
-**Important:** For security, keys are generated on YOUR machine, not on GitHub.
+If you already cloned `fair-pulse`, skip to Step 2.
 
 ```bash
-# Make sure you're in your plugin directory
-cd path/to/your-plugin
-
-# Run the key generator
-php .github/scripts/fair/generate-keys-local.php
+mkdir -p ~/fair-tools
+cd ~/fair-tools
+git clone https://github.com/fairpm/fair-pulse.git
+cd fair-pulse
 ```
 
-The script will display 4 keys. **Keep this terminal window open** - you'll need to copy these keys in the next step.
+At this point, your terminal should be inside the `fair-pulse` folder.
 
-### Step 3: Add Keys as GitHub Secrets
+### Step 2: Install dependencies in that folder
 
-1. Go to your GitHub repository
-2. Click on **Settings** (top menu)
-3. In the left sidebar, click **Secrets and variables** → **Actions**
-4. Click the **New repository secret** button
-5. Add each of these 4 secrets (copy the values from your terminal):
+Run this from inside `fair-pulse`:
 
-   | Secret Name | Copy from terminal |
-   |------------|-------------------|
-   | `FAIR_ROTATION_KEY_PRIVATE` | First key displayed |
-   | `FAIR_ROTATION_KEY_PUBLIC` | Second key displayed |
-   | `FAIR_VERIFICATION_KEY_PRIVATE` | Third key displayed |
-   | `FAIR_VERIFICATION_KEY_PUBLIC` | Fourth key displayed |
-
-6. After adding all 4 secrets, you can close the terminal (or clear the history for security)
-
-### Step 4: Create a Release
-
-The FAIR publish workflow triggers automatically after the release workflow completes.
-
-**Option A: Create a release via tag** (Recommended)
 ```bash
-# Create and push a new version tag
-git tag v1.0.0
-git push origin v1.0.0
+composer install
 ```
 
-**Option B: Create a release manually**
-1. Go to your repository on GitHub
-2. Click **Releases** → **Draft a new release**
-3. Click **Choose a tag** → Type your version (e.g., `v1.0.0`) → **Create new tag**
-4. Fill in the release title and description
-5. Click **Publish release**
+### Step 3: Generate keys locally (on your machine only)
 
-### Step 5: Wait for FAIR Publishing to Complete
+Still in the same `fair-pulse` folder, run:
 
-After the release workflow completes:
+```bash
+composer fair:generate-keys-local
+```
 
-1. The **"Publish to FAIR Repository"** workflow will automatically start
-2. Go to the **Actions** tab to monitor progress
-3. The workflow will:
-   - Create a DID for your plugin (first time only)
-   - Download the release asset
-   - Sign the package with your verification key
-   - Generate FAIR metadata
-   - Upload `fair-metadata.json` to the release
-   - Register with the PLC directory
+Alternative command:
 
-4. Once complete, check the release - you'll see `fair-metadata.json` attached
+```bash
+php src/actions/GenerateKeysLocalAction.php
+```
 
-**🎉 Congratulations!** Your plugin is now published to the FAIR repository!
+This prints four values. Keep that terminal open until you finish Step 4.
 
-### Step 6: Save Your DID (First Publish Only)
+### Step 4: Add keys to GitHub Secrets
 
-**Important:** After your FIRST successful publish, you must save the generated DID as a repository **variable**.
+Add these values as repository secrets:
 
-1. Go to the **Actions** tab in your repository
-2. Click on the latest **"Publish to FAIR Repository"** workflow run
-3. Check the **Summary** section at the top - your DID will be displayed in a box
-4. Copy the DID value (format: `did:plc:...`)
-5. Add it as a repository **variable** (not a secret):
-   - Go to: **Settings** → **Secrets and variables** → **Actions**
-   - Click the **"Variables"** tab
-   - Click **"New repository variable"**
-   - Name: `FAIR_DID`
-   - Value: (paste the DID, e.g., `did:plc:abc123xyz...`)
-   - Click **"Add variable"**
+1. FAIR_ROTATION_KEY_PRIVATE
+2. FAIR_ROTATION_KEY_PUBLIC
+3. FAIR_VERIFICATION_KEY_PRIVATE
+4. FAIR_VERIFICATION_KEY_PUBLIC
 
-**Why use Variables instead of Secrets?** DIDs contain special characters (like `:`) that aren't allowed in secrets. Variables are perfect for non-sensitive identifiers like DIDs.
+In GitHub UI:
 
-**Why save it?** This DID identifies your plugin in the FAIR protocol. Saving it as a variable allows future releases to use the same identity instead of creating a new DID each time.
+1. Open your plugin repository
+2. Go to Settings
+3. Go to Secrets and variables -> Actions
+4. Open Secrets tab
+5. Click New repository secret
+6. Add each key/value from Step 3
 
-This step is only needed once. Future publishes will automatically use this stored DID.
+### Step 5: Add workflow file to your plugin repository
 
----
+In your plugin repository (not in `fair-pulse`), create:
 
-## What Happens Behind the Scenes
+1. `.github/workflows/publish-fair.yml`
 
-When you create a release, here's the full flow:
+If the folders do not exist, create them first:
 
-1. **Release Workflow** (`fair-release.yml`) runs:
-   - Builds plugin ZIP
-   - Creates GitHub release
-   - Uploads ZIP as release asset
+```bash
+mkdir -p .github/workflows
+```
 
-2. **FAIR Publish Workflow** (`fair-publish.yml`) runs automatically:
-   - Validates cryptographic keys exist
-   - Creates or uses existing DID
-   - Downloads the release ZIP
-   - Signs the ZIP with verification key
-   - Generates FAIR metadata
-   - Uploads metadata to release
+Then paste this workflow:
 
-3. **Your plugin is now available** via FAIR protocol!
+```yaml
+name: Publish FAIR Metadata
 
----
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version tag (for example v1.2.3)
+        required: true
+        type: string
 
-## Additional Information
+permissions:
+  contents: write
 
-### How It Works
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-### Workflow Trigger
+      - name: Publish to FAIR
+        uses: fairpm/fair-pulse@v1
+        with:
+          version: ${{ inputs.version }}
+          artifact-name: my-plugin.zip
+          upload-metadata: 'true'
+          update-did-service: 'true'
+        env:
+          FAIR_ROTATION_KEY_PRIVATE: ${{ secrets.FAIR_ROTATION_KEY_PRIVATE }}
+          FAIR_ROTATION_KEY_PUBLIC: ${{ secrets.FAIR_ROTATION_KEY_PUBLIC }}
+          FAIR_VERIFICATION_KEY_PRIVATE: ${{ secrets.FAIR_VERIFICATION_KEY_PRIVATE }}
+          FAIR_VERIFICATION_KEY_PUBLIC: ${{ secrets.FAIR_VERIFICATION_KEY_PUBLIC }}
+          FAIR_DID: ${{ vars.FAIR_DID }}
+```
 
-The workflow runs in two scenarios:
+Commit and push that file to your plugin repository.
 
-1. **Automatically after release** - Triggers when the `fair-release.yml` workflow completes successfully (when a new tag is pushed)
-2. **Manual dispatch** - Can be manually triggered from the Actions tab with an optional version parameter
+### Step 6: Make sure the release ZIP name matches
 
-#### Cryptographic Keys
+In the workflow above, `artifact-name` is set to `my-plugin.zip`.
 
-For security, cryptographic keys are **NEVER generated in GitHub Actions**. Instead:
+That must exactly match the release asset filename attached to your GitHub release.
 
-1. **Generate keys locally** on your machine using `generate-keys-local.php`
-2. **Copy them** to GitHub Secrets manually
-3. **Keys never leave your machine** during generation
+### Step 7: Run the workflow for your first publish
 
-This ensures maximum security as private keys are never exposed to GitHub's infrastructure.
+1. Go to Actions in your plugin repository
+2. Open Publish FAIR Metadata
+3. Click Run workflow
+4. Enter your version (for example `v1.2.3`)
+5. Run it
 
-#### DID Creation
+### Step 8: Save the DID after first successful run
 
-The workflow creates a PLC DID (Decentralized Identifier) for your package:
-- Uses the generated cryptographic keys
-- Submits to the PLC directory at `https://plc.directory`
-- Adds a FAIR service endpoint pointing to your metadata
-- Stores the DID as a secret for future use
+If `FAIR_DID` is not set yet, the action creates one.
 
-#### Package Signing and Publishing
+Add it as a repository variable:
 
-For each release:
-1. Downloads the release ZIP created by `fair-release.yml`
-2. Calculates SHA-256 checksum
-3. Signs the package with the verification key
-4. Generates FAIR-compliant `metadata.json`
-5. Uploads metadata to the GitHub release
+1. Name: FAIR_DID
+2. Value: the generated `did:plc:...` from logs/outputs
 
-### Prerequisites (Before Starting)
+In GitHub UI:
 
-Before following the setup steps above, ensure you have:
+1. Settings -> Secrets and variables -> Actions
+2. Open Variables tab
+3. Click New repository variable
+4. Add `FAIR_DID`
 
-- A WordPress plugin with a main plugin file containing standard headers
-- A GitHub repository with releases enabled
-- PHP installed locally (for key generation)
-- The `fair-release.yml` workflow (or similar) that creates releases from tags
+Future runs reuse this DID.
 
-### Manual Publishing (Optional)
+## Minimal Workflow Snippet (Reference)
 
-To manually publish a specific version outside of the automatic release flow:
+```yaml
+name: Publish FAIR Metadata
 
-1. Go to **Actions** tab in your repository
-2. Select **"Publish to FAIR Repository"** workflow
-3. Click **"Run workflow"** button (top right)
-4. Optionally enter a version (e.g., `v0.0.1`) or leave empty to use the latest tag
-5. Click **"Run workflow"**
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version tag (for example v1.2.3)
+        required: true
+        type: string
 
----
+permissions:
+  contents: write
 
-## Repository Secrets & Variables
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-The workflow requires these secrets and variables:
+      - name: Publish to FAIR
+        uses: fairpm/fair-pulse@v1
+        with:
+          version: ${{ inputs.version }}
+          artifact-name: my-plugin.zip
+          upload-metadata: 'true'
+          update-did-service: 'true'
+        env:
+          FAIR_ROTATION_KEY_PRIVATE: ${{ secrets.FAIR_ROTATION_KEY_PRIVATE }}
+          FAIR_ROTATION_KEY_PUBLIC: ${{ secrets.FAIR_ROTATION_KEY_PUBLIC }}
+          FAIR_VERIFICATION_KEY_PRIVATE: ${{ secrets.FAIR_VERIFICATION_KEY_PRIVATE }}
+          FAIR_VERIFICATION_KEY_PUBLIC: ${{ secrets.FAIR_VERIFICATION_KEY_PUBLIC }}
+          FAIR_DID: ${{ vars.FAIR_DID }}
+```
 
-### Secrets (Sensitive Keys)
+## Inputs
 
-| Secret Name | Purpose | How to Add |
-|------------|---------|------------|
-| `FAIR_ROTATION_KEY_PRIVATE` | DID rotation key (secp256k1) | Generated locally in Step 2, added manually in Step 3 |
-| `FAIR_ROTATION_KEY_PUBLIC` | DID rotation public key | Generated locally in Step 2, added manually in Step 3 |
-| `FAIR_VERIFICATION_KEY_PRIVATE` | Package signing key (Ed25519) | Generated locally in Step 2, added manually in Step 3 |
-| `FAIR_VERIFICATION_KEY_PUBLIC` | Package verification public key | Generated locally in Step 2, added manually in Step 3 |
+| Input | Required | Default | Description |
+|---|---|---|---|
+| version | No | empty | Version/tag to publish. If empty, resolves from tag ref or latest git tag. |
+| artifact-name | No | empty | Release asset filename to download and sign. Must end in `.zip`. |
+| upload-metadata | No | true | Upload generated `fair-metadata.json` to release. |
+| update-did-service | No | true | Update DID service endpoint to uploaded metadata URL. |
 
-### Variables (Non-Sensitive Identifiers)
+## Outputs
 
-| Variable Name | Purpose | How to Add |
-|--------------|---------|------------|
-| `FAIR_DID` | Your package's DID identifier | Generated by first workflow run, **you must add manually** as a variable (see Step 6) |
+| Output | Description |
+|---|---|
+| version | Published release version |
+| did | DID used during publish |
+| artifact-path | Local path of downloaded artifact |
+| metadata-path | Local path of generated FAIR metadata |
 
-**Important**: Keys are generated locally using `generate-keys-local.php` for maximum security. Never generate private keys in GitHub Actions.
+## Example Files In This Repository
 
----
-### Automatic Publishing
+1. Full workflow example: `examples/example.yml`
+2. Example guide: `examples/README.md`
 
-The workflow runs automatically whenever:
-- You push a new tag (e.g., `v1.0.0`)
-- The `fair-release.yml` workflow completes successfully
+## Local Execution (Optional)
 
-No manual intervention required after initial setup!
+Build Docker image:
 
-### Manual Publishing
+```bash
+docker build -t fair-pulse-local .
+```
 
-To manually publish a specific version:
+Run local key generation in Docker:
 
-1. Go to **Actions** tab in your repository
-2. Select **"Publish to FAIR Repository"** workflow
-3. Click **"Run workflow"**
-4. Optionally enter a version (leave empty to use latest tag)
-5. Click **"Run workflow"**
+```bash
+docker run --rm -it fair-pulse-local php src/actions/GenerateKeysLocalAction.php
+```
 
-## Workflow Steps
+Run full publish flow in Docker:
 
-### 1. Key Management
-- Checks for existing cryptographic keys
-- Generates new keys if none exist
-- Saves keys as repository secrets
- in secrets
-- Keys must be generated locally beforehand (never in Actions)
-- Fails if keys are missing with instructionsting one
-- Submits to PLC directory
-- Updates with FAIR service endpoint
-
-### 3. Package Building
-- Creates clean plugin ZIP archive
-- Excludes development files (`.git`, `node_modules`, etc.)
-- Calculates SHA-256 checksum
-
-### 4. Artifact Signing
-- Signs the package ZIP with verification key
-- Generates cryptographic signature
-- Ensures package integrity
-
-### 5. Metadata Generation
-- Parses plugin headers and `readme.txt`
-- Generates FAIR-compliant `metadata.json`
-- Includes release information, dependencies, and artifact details
-
-### 6. Publishing
-- Uploads `fair-metadata.json` to GitHub release
-- Makes metadata available at predictable URL
-
-## FAIR Metadata
-
-The generated metadata includes:
-
-- **Package information**: name, description, slug, license
-- **Authors and security contacts**
-- **Release details**: version, dependencies, requirements
-- **Artifacts**: package ZIP with signature and checksum
-- **Documentation sections**: changelog, description, installation, etc.
-
-Example metadata structure:
-```json
-{
-  "@context": "https://fair.pm/ns/metadata/v1",
-  "id": "did:plc:abc123...",
-  "type": "wp-plugin",
-  "name": "Minimal Admin",
-  "license": "GPL-2.0+",
-  "releases": [
-    {
-      "version": "1.0.0",
-      "artifacts": {
-        "package": {
-          "url": "https://github.com/user/repo/releases/download/v1.0.0/plugin.zip",
-          "signature": "zQ3sh...",
-          "checksum": "sha256:abc..."
-        }
-      }
-    }
-  ]
-}
+```bash
+docker run --rm -it \
+  -e GITHUB_REPOSITORY=owner/repo \
+  -e GITHUB_SERVER_URL=https://github.com \
+  -e GITHUB_TOKEN=ghp_xxx \
+  -e INPUT_VERSION=v1.2.3 \
+  -e INPUT_ARTIFACT_NAME=my-plugin.zip \
+  -e FAIR_ROTATION_KEY_PRIVATE=... \
+  -e FAIR_ROTATION_KEY_PUBLIC=... \
+  -e FAIR_VERIFICATION_KEY_PRIVATE=... \
+  -e FAIR_VERIFICATION_KEY_PUBLIC=... \
+  -e FAIR_DID=did:plc:optionalExistingDid \
+  fair-pulse-local
 ```
 
 ## Troubleshooting
 
-### First run fails with "Keys were generated"
+1. Missing keys error:
+Generate keys locally and add all four key secrets.
 
-This is expected behavior:
-1. KKeys not found error
+2. Artifact not found:
+Ensure `artifact-name` matches the exact release asset filename.
 
-If the workflow fails with "Cryptographic keys not found":
-1. Clone your repository locally
-2. Run: `php .github/scripts/fair/generate-keys-local.php`
-3. Copy the displayed keys to GitHub Secrets
-4. Re-run the workflow
+3. Permission issues:
+Workflow needs `contents: write` permission to upload metadata.
 
-### First run fails with "Keys were generated"
+## Development
 
-This error should no longer occur - keys must be generated locally for security.
-If the workflow can't find `FAIR_DID`:
-- This is normal on first run
-- A new DID will be created automatically
-- Future runs will use the stored DID
-
-### Signature verification fails
-
-Check that:
-- Verification keys haven't been modified
-- The workflow has completed successfully
-- Artifact hasn't been modified after signing
-
-### Missing plugin file error
-
-Ensure:
-- Your plugin has a main PHP file
-- The file contains standard WordPress plugin headers
-- The file includes `Plugin Name:` header
-
-## File Structure
-
-```
-.github/
-├── scripts/fair/          # PHP scripts for FAIR operations
-│   ├── manage-keys.php    # Key generation and management
-│   ├── create-did.php     # DID creation and registration
-│   ├── sign-artifact.php  # Package signing
-│   ├── generate-metadata.php  # Metadata generation
-│   └── update-did-service.php # DID service updates
-└── workflows/
-    ├── fair-publish.yml   # Main FAIR publishing workflow
-    └── fair-release.yml        # GitHub release creation
+```bash
+vendor/bin/phpunit
+composer validate --no-check-publish
 ```
 
-## Security Considerations
+## Changelog
 
-### Private Keys
-- Never commit private keys to version control
-- Keys are stored as encrypted GitHub secrets
-- Only accessible to workflows with appropriate permissions
+See `CHANGELOG.md`.
 
-### Key Rotation
-If you need to rotate keys:
-1. Delete the existing key secrets from repository settings
-2. Re-run the workflow to generate new keys
-3. Update your DID with new keys (handled automatically)
-
-### Package Verification
-Users can verify package integrity:
-1. Check the signature against your verification key
-2. Verify checksum of downloaded artifact
-3. Validate DID authenticity via PLC directory
-
-## Resources
-
-- [FAIR Protocol Specification](https://github.com/fairpm/fair-protocol)
-- [FAIR Repository Implementation Guide](https://github.com/fairpm/fair-protocol/blob/main/docs/implementing/repository.md)
-- [PLC Directory](https://plc.directory/)
-- [DID Manager Library](https://github.com/fairpm/did-manager)
-
-## Support
-
-For issues or questions:
-- Check the workflow logs in the Actions tab
-- Review the [FAIR Protocol documentation](https://github.com/fairpm/fair-protocol)
-- Open an issue in your repository
-
-## License
-
-This workflow implementation follows the same license as your plugin project.

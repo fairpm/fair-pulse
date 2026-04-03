@@ -1,0 +1,30 @@
+{
+    "name": "fairpm/fair-pulse",
+    "description": "FAIR Pulse - GitHub Action tooling",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "FairPulse\\Actions\\": "src/actions/",
+            "FairPulse\\Core\\": "src/core/",
+            "FairPulse\\Interfaces\\": "src/interfaces/",
+            "FairPulse\\Models\\": "src/models/",
+            "FairPulse\\Services\\": "src/services/",
+            "FairPulse\\Utils\\": "src/utils/"
+        }
+    },
+    "require": {
+        "fairpm/did-manager-wordpress": "^0.0.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "FairPulse\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "fair:generate-keys-local": "php src/actions/GenerateKeysLocalAction.php"
+    }
+}

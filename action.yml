@@ -1,0 +1,65 @@
+name: FAIR Pulse
+description: Publish WordPress plugin release artifacts to FAIR with DID, signing, and metadata generation.
+author: fairpm
+branding:
+  icon: package
+  color: blue
+
+inputs:
+  version:
+    description: Release version tag to publish (example v1.2.3). If omitted, resolves from tag context or latest git tag.
+    required: false
+    default: ''
+  artifact-name:
+    description: Release asset filename to download and sign. Must end with .zip.
+    required: false
+    default: ''
+  upload-metadata:
+    description: Upload generated fair-metadata.json to the GitHub release.
+    required: false
+    default: 'true'
+  update-did-service:
+    description: Update DID service endpoint to point at uploaded fair-metadata.json.
+    required: false
+    default: 'true'
+
+outputs:
+  version:
+    description: Published release version.
+    value: ${{ steps.pulse.outputs.version }}
+  did:
+    description: DID used during publish.
+    value: ${{ steps.pulse.outputs.did }}
+  artifact-path:
+    description: Local path to downloaded release artifact.
+    value: ${{ steps.pulse.outputs.artifact_path }}
+  metadata-path:
+    description: Local path to generated FAIR metadata file.
+    value: ${{ steps.pulse.outputs.metadata_path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP
+      uses: shivammathur/setup-php@9e72090525849c5e82e596468b86eb55e9cc5401 # v2
+      with:
+        php-version: '8.3'
+        extensions: curl, gmp, json, mbstring
+        coverage: none
+
+    - name: Install action dependencies
+      shell: bash
+      run: |
+        cd "${{ github.action_path }}"
+        composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+    - name: Run FAIR Pulse
+      id: pulse
+      shell: bash
+      run: php "${{ github.action_path }}/src/actions/PublishFairAction.php"
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        INPUT_UPLOAD_METADATA: ${{ inputs.upload-metadata }}
+        INPUT_UPDATE_DID_SERVICE: ${{ inputs.update-did-service }}
+        GITHUB_TOKEN: ${{ github.token }}
