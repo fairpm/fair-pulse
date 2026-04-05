@@ -71,7 +71,12 @@ final class PublishFairAction
             }
 
             $artifactPath = '/tmp/' . $artifactName;
-            $this->downloadReleaseArtifact($repo, $version, $artifactName, $artifactPath);
+            $releaseTag = $this->ensureReleaseArtifact($repo, $version, $artifactName, $artifactPath);
+            if ($releaseTag !== $version) {
+                $this->runtime->logger()->notice(
+                    'Using normalized release tag: ' . $releaseTag . ' (from ' . $version . ')'
+                );
+            }
 
             $signOutputs = $this->runActionWithOutputs(
                 __DIR__ . '/SignArtifactAction.php',
@@ -107,13 +112,13 @@ final class PublishFairAction
             $metadataPath = $metadataOutputs['metadata_path'] ?? '/tmp/fair-metadata.json';
 
             if ($uploadMetadata) {
-                $this->uploadMetadata($repo, $version, $metadataPath);
+                $this->uploadMetadata($repo, $releaseTag, $metadataPath);
             } else {
                 $this->runtime->logger()->notice('Skipping metadata upload (upload-metadata=false).');
             }
 
             if ($updateDidService) {
-                $metadataUrl = rtrim($repoUrl, '/') . '/releases/download/' . $version . '/fair-metadata.json';
+                $metadataUrl = rtrim($repoUrl, '/') . '/releases/download/' . $releaseTag . '/fair-metadata.json';
                 $this->runActionWithOutputs(
                     __DIR__ . '/UpdateDidServiceAction.php',
                     [
@@ -128,7 +133,7 @@ final class PublishFairAction
                 $this->runtime->logger()->notice('Skipping DID update (update-did-service=false).');
             }
 
-            $this->runtime->output()->write('version', $version);
+            $this->runtime->output()->write('version', $releaseTag);
             $this->runtime->output()->write('did', $did);
             $this->runtime->output()->write('artifact_path', $artifactPath);
             $this->runtime->output()->write('metadata_path', $metadataPath);
@@ -219,23 +224,125 @@ final class PublishFairAction
         return $value;
     }
 
-    private function downloadReleaseArtifact(string $repo, string $version, string $artifactName, string $artifactPath): void
+    private function ensureReleaseArtifact(string $repo, string $version, string $artifactName, string $artifactPath): string
     {
         $this->runtime->logger()->group('Download release artifact');
-        $this->runCommand(
-            'gh release download ' . escapeshellarg($version)
-            . ' --repo ' . escapeshellarg($repo)
-            . ' -p ' . escapeshellarg($artifactName)
-            . ' -O ' . escapeshellarg($artifactPath),
-            'Download release artifact with gh'
-        );
+        try {
+            foreach ($this->releaseTagCandidates($version) as $candidateTag) {
+                try {
+                    $this->runCommand(
+                        'gh release download ' . escapeshellarg($candidateTag)
+                        . ' --repo ' . escapeshellarg($repo)
+                        . ' -p ' . escapeshellarg($artifactName)
+                        . ' -O ' . escapeshellarg($artifactPath),
+                        'Download release artifact with gh'
+                    );
 
-        if (!file_exists($artifactPath)) {
-            throw new \RuntimeException('Artifact download failed: file not found at ' . $artifactPath);
+                    if (!file_exists($artifactPath)) {
+                        throw new \RuntimeException('Artifact download failed: file not found at ' . $artifactPath);
+                    }
+
+                    $this->runtime->logger()->notice('Artifact downloaded: ' . $artifactPath);
+
+                    return $candidateTag;
+                } catch (\RuntimeException $runtimeException) {
+                    $this->runtime->logger()->notice(
+                        'Release tag not found or missing asset for tag: ' . $candidateTag
+                    );
+                }
+            }
+
+            $this->runtime->logger()->notice(
+                'No matching release asset found. Building and uploading artifact from workspace.'
+            );
+
+            $workspace = $this->requireEnv(
+                'GITHUB_WORKSPACE',
+                'GITHUB_WORKSPACE is required to build a missing release artifact.'
+            );
+
+            $workspaceArtifactPath = rtrim($workspace, '/') . '/' . $artifactName;
+            if (is_file($workspaceArtifactPath)) {
+                if (!copy($workspaceArtifactPath, $artifactPath)) {
+                    throw new \RuntimeException(
+                        'Failed to copy workspace artifact from ' . $workspaceArtifactPath
+                    );
+                }
+
+                $this->runtime->logger()->notice('Using workspace artifact: ' . $workspaceArtifactPath);
+            } else {
+                $this->buildArtifactFromWorkspace($workspace, $artifactPath);
+            }
+
+            $releaseTag = $this->ensureReleaseExists($repo, $version);
+            $this->runCommand(
+                'gh release upload ' . escapeshellarg($releaseTag)
+                . ' --repo ' . escapeshellarg($repo)
+                . ' ' . escapeshellarg($artifactPath)
+                . ' --clobber',
+                'Upload generated artifact to release'
+            );
+
+            return $releaseTag;
+        } finally {
+            $this->runtime->logger()->endGroup();
+        }
+    }
+
+    private function buildArtifactFromWorkspace(string $workspace, string $artifactPath): void
+    {
+        if (!is_dir($workspace)) {
+            throw new \RuntimeException('Workspace path does not exist: ' . $workspace);
         }
 
-        $this->runtime->logger()->notice('Artifact downloaded: ' . $artifactPath);
-        $this->runtime->logger()->endGroup();
+        $this->runCommand(
+            'rm -f ' . escapeshellarg($artifactPath),
+            'Remove stale artifact archive before rebuild',
+            true
+        );
+
+        $command = 'git -C ' . escapeshellarg($workspace)
+            . ' archive --format=zip --output=' . escapeshellarg($artifactPath) . ' HEAD';
+
+        $this->runCommand($command, 'Build artifact archive from workspace with git archive');
+
+        if (!is_file($artifactPath)) {
+            throw new \RuntimeException('Failed to build artifact archive at ' . $artifactPath);
+        }
+
+        $this->runtime->logger()->notice('Built artifact archive: ' . $artifactPath);
+    }
+
+    private function ensureReleaseExists(string $repo, string $version): string
+    {
+        foreach ($this->releaseTagCandidates($version) as $candidateTag) {
+            try {
+                $this->runCommand(
+                    'gh release view ' . escapeshellarg($candidateTag)
+                    . ' --repo ' . escapeshellarg($repo),
+                    'Check release exists for tag ' . $candidateTag
+                );
+
+                return $candidateTag;
+            } catch (\RuntimeException $runtimeException) {
+                $this->runtime->logger()->notice('Release not found for tag: ' . $candidateTag);
+            }
+        }
+
+        $releaseTag = $this->releaseTagCandidates($version)[0] ?? $version;
+        $createCommand = 'gh release create ' . escapeshellarg($releaseTag)
+            . ' --repo ' . escapeshellarg($repo)
+            . ' --title ' . escapeshellarg($releaseTag)
+            . ' --notes ' . escapeshellarg('Release created by FAIR Pulse');
+
+        $sha = trim((string) ($this->runtime->env()->get('GITHUB_SHA') ?? ''));
+        if ($sha !== '') {
+            $createCommand .= ' --target ' . escapeshellarg($sha);
+        }
+
+        $this->runCommand($createCommand, 'Create release for missing tag ' . $releaseTag);
+
+        return $releaseTag;
     }
 
     private function uploadMetadata(string $repo, string $version, string $metadataPath): void
@@ -346,6 +453,29 @@ final class PublishFairAction
         }
 
         return $outputs;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function releaseTagCandidates(string $version): array
+    {
+        $normalized = trim($version);
+        if ($normalized === '') {
+            return [];
+        }
+
+        $candidates = [$normalized];
+        if (str_starts_with($normalized, 'v')) {
+            $withoutPrefix = ltrim($normalized, 'v');
+            if ($withoutPrefix !== '') {
+                $candidates[] = $withoutPrefix;
+            }
+        } else {
+            $candidates[] = 'v' . $normalized;
+        }
+
+        return array_values(array_unique($candidates));
     }
 
     /**
