@@ -19,14 +19,13 @@ final class ManageKeysAction
         $keys = $service->loadFromEnvironment();
 
         if ($keys === null) {
-            $this->runtime->logger()->error('Cryptographic keys not found in repository secrets.');
+            $this->runtime->logger()->error('Verification keys not found in repository secrets.');
             $this->runtime->logger()->error('For security, keys must be generated on your LOCAL machine.');
             $this->runtime->logger()->error('');
             $this->runtime->logger()->error('INSTRUCTIONS:');
-            $this->runtime->logger()->error('1. Clone this repository to your local machine');
-            $this->runtime->logger()->error('2. Run: composer fair:generate-keys-local');
-            $this->runtime->logger()->error('   (or: php src/actions/GenerateKeysLocalAction.php)');
-            $this->runtime->logger()->error('3. Copy the generated keys to GitHub Secrets');
+            $this->runtime->logger()->error('1. Clone fair-pulse to your local machine');
+            $this->runtime->logger()->error('2. Run: composer fair:setup-local -- https://github.com/<owner>/<repo>');
+            $this->runtime->logger()->error('3. Copy the verification keys and DID to GitHub');
             $this->runtime->logger()->error('4. Re-run this workflow');
             $this->runtime->logger()->error('');
             $this->runtime->logger()->error('Keys are never generated in GitHub Actions for security.');
@@ -37,8 +36,6 @@ final class ManageKeysAction
 
         $this->runtime->logger()->notice('Using existing keys from secrets');
         $this->runtime->output()->write('keys_exist', 'true');
-        $this->runtime->output()->write('rotation_private', $keys->rotationPrivate, true);
-        $this->runtime->output()->write('rotation_public', $keys->rotationPublic, true);
         $this->runtime->output()->write('verification_private', $keys->verificationPrivate, true);
         $this->runtime->output()->write('verification_public', $keys->verificationPublic, true);
 

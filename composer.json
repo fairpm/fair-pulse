@@ -25,6 +25,7 @@
     },
     "scripts": {
         "test": "phpunit",
-        "fair:generate-keys-local": "php src/actions/GenerateKeysLocalAction.php"
+        "fair:setup-local": "php src/actions/CreateDidLocalAction.php",
+        "fair:update-did-service": "php src/actions/UpdateDidServiceAction.php"
     }
 }

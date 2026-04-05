@@ -4,7 +4,7 @@ This folder contains copy-ready examples for integrating the FAIR Pulse action.
 
 ## Included
 
-- `example.yml` - End-to-end example that creates a release ZIP and publishes FAIR metadata.
+- `example.yml` - Single-job workflow that publishes FAIR metadata. FAIR Pulse handles artifact build and upload automatically.
 
 ## Apply in your repository
 
@@ -14,10 +14,9 @@ Copy `examples/example.yml` into your repository workflows folder, for example:
 cp examples/example.yml .github/workflows/fair-publish.yml
 ```
 
-## Notes
+## Setup
 
-- Generate keys locally first:
-  - `composer install`
-  - `composer fair:generate-keys-local`
-- Add generated keys as repository secrets.
-- Add `FAIR_DID` as a repository variable after first successful publish.
+1. Run `composer fair:setup-local -- https://github.com/<owner>/<repo>` locally (one-time).
+2. Add `FAIR_VERIFICATION_KEY_PRIVATE` and `FAIR_VERIFICATION_KEY_PUBLIC` as repository secrets.
+3. Add `FAIR_DID` as a repository variable.
+4. Back up rotation keys securely — they stay on your machine.

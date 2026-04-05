@@ -30,7 +30,6 @@ final class PublishFairAction
             $version = $this->resolveVersion();
             $artifactName = $this->resolveArtifactName($repo);
             $uploadMetadata = $this->resolveBoolInput('INPUT_UPLOAD_METADATA', true);
-            $updateDidService = $this->resolveBoolInput('INPUT_UPDATE_DID_SERVICE', true);
 
             $this->runtime->logger()->notice('Resolved version: ' . $version);
             $this->runtime->logger()->notice('Resolved artifact name: ' . $artifactName);
@@ -38,8 +37,6 @@ final class PublishFairAction
             $keysOutputs = $this->runActionWithOutputs(
                 __DIR__ . '/ManageKeysAction.php',
                 [
-                    'FAIR_ROTATION_KEY_PRIVATE' => $this->runtime->env()->get('FAIR_ROTATION_KEY_PRIVATE') ?? '',
-                    'FAIR_ROTATION_KEY_PUBLIC' => $this->runtime->env()->get('FAIR_ROTATION_KEY_PUBLIC') ?? '',
                     'FAIR_VERIFICATION_KEY_PRIVATE' => $this->runtime->env()->get('FAIR_VERIFICATION_KEY_PRIVATE') ?? '',
                     'FAIR_VERIFICATION_KEY_PUBLIC' => $this->runtime->env()->get('FAIR_VERIFICATION_KEY_PUBLIC') ?? '',
                     'FAIR_DID' => $this->runtime->env()->get('FAIR_DID') ?? '',
@@ -51,21 +48,14 @@ final class PublishFairAction
                 throw new \RuntimeException('Required FAIR keys are missing.');
             }
 
-            $didOutputs = $this->runActionWithOutputs(
-                __DIR__ . '/CreateDidAction.php',
-                [
-                    'ROTATION_PRIVATE' => $keysOutputs['rotation_private'] ?? '',
-                    'ROTATION_PUBLIC' => $keysOutputs['rotation_public'] ?? '',
-                    'VERIFICATION_PRIVATE' => $keysOutputs['verification_private'] ?? '',
-                    'VERIFICATION_PUBLIC' => $keysOutputs['verification_public'] ?? '',
-                    'EXISTING_DID' => $keysOutputs['did'] ?? '',
-                    'DID_EXISTS' => $keysOutputs['did_exists'] ?? 'false',
-                    'REPO_URL' => $repoUrl,
-                ],
-                'Create DID'
-            );
-
-            $did = $didOutputs['did'] ?? '';
+            $did = $keysOutputs['did'] ?? '';
+            if ($did === '' || ($keysOutputs['did_exists'] ?? 'false') !== 'true') {
+                throw new \RuntimeException(
+                    'FAIR_DID is required. '
+                    . 'Run local setup first: composer fair:setup-local -- https://github.com/<owner>/<repo>'
+                );
+            }
+            $this->runtime->logger()->notice('Using existing DID: ' . $did);
             if ($did === '') {
                 throw new \RuntimeException('DID generation failed: missing DID output.');
             }
@@ -115,22 +105,6 @@ final class PublishFairAction
                 $this->uploadMetadata($repo, $releaseTag, $metadataPath);
             } else {
                 $this->runtime->logger()->notice('Skipping metadata upload (upload-metadata=false).');
-            }
-
-            if ($updateDidService) {
-                $metadataUrl = rtrim($repoUrl, '/') . '/releases/download/' . $releaseTag . '/fair-metadata.json';
-                $this->runActionWithOutputs(
-                    __DIR__ . '/UpdateDidServiceAction.php',
-                    [
-                        'DID' => $did,
-                        'ROTATION_PRIVATE' => $keysOutputs['rotation_private'] ?? '',
-                        'METADATA_URL' => $metadataUrl,
-                        'PREV_CID' => $didOutputs['cid'] ?? '',
-                    ],
-                    'Update DID Service'
-                );
-            } else {
-                $this->runtime->logger()->notice('Skipping DID update (update-did-service=false).');
             }
 
             $this->runtime->output()->write('version', $releaseTag);

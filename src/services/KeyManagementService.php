@@ -15,24 +15,18 @@ final class KeyManagementService
 
     public function loadFromEnvironment(): ?KeySet
     {
-        $rotationPrivate = $this->env->get('FAIR_ROTATION_KEY_PRIVATE');
-        $rotationPublic = $this->env->get('FAIR_ROTATION_KEY_PUBLIC');
         $verificationPrivate = $this->env->get('FAIR_VERIFICATION_KEY_PRIVATE');
         $verificationPublic = $this->env->get('FAIR_VERIFICATION_KEY_PUBLIC');
         $did = $this->env->get('FAIR_DID');
 
-        $keysExist = $rotationPrivate !== null && $rotationPrivate !== ''
-            && $rotationPublic !== null && $rotationPublic !== ''
-            && $verificationPrivate !== null && $verificationPrivate !== ''
+        $verificationKeysExist = $verificationPrivate !== null && $verificationPrivate !== ''
             && $verificationPublic !== null && $verificationPublic !== '';
 
-        if (!$keysExist) {
+        if (!$verificationKeysExist) {
             return null;
         }
 
         return new KeySet(
-            $rotationPrivate,
-            $rotationPublic,
             $verificationPrivate,
             $verificationPublic,
             $did,
