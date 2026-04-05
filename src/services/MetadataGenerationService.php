@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace FairPulse\Services;
 
-use FAIR\DID\Parsers\MetadataGenerator;
-use FAIR\DID\Parsers\PluginHeaderParser;
-use FAIR\DID\Parsers\ReadmeParser;
+use FAIR\WordPress\DID\Parsers\MetadataGenerator;
+use FAIR\WordPress\DID\Parsers\PluginHeaderParser;
+use FAIR\WordPress\DID\Parsers\ReadmeParser;
 
 final class MetadataGenerationService
 {
@@ -65,9 +65,7 @@ final class MetadataGenerationService
         if (!isset($metadata['id'])) {
             $metadata['id'] = $did;
         }
-        if (!isset($metadata['type'])) {
-            $metadata['type'] = 'wp-plugin';
-        }
+        $metadata['type'] = $this->normalizeMetadataType($metadata['type'] ?? null);
 
         return $metadata;
     }
@@ -87,5 +85,19 @@ final class MetadataGenerationService
         }
 
         throw new \RuntimeException('Could not find main plugin file');
+    }
+
+    private function normalizeMetadataType(mixed $type): string
+    {
+        $value = is_string($type) ? trim($type) : '';
+        if ($value === '' || $value === 'plugin') {
+            return 'wp-plugin';
+        }
+
+        if ($value === 'theme') {
+            return 'wp-theme';
+        }
+
+        return $value;
     }
 }
