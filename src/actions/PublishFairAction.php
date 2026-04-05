@@ -71,7 +71,7 @@ final class PublishFairAction
             }
 
             $artifactPath = '/tmp/' . $artifactName;
-            $this->downloadReleaseArtifact($version, $artifactName, $artifactPath);
+            $this->downloadReleaseArtifact($repo, $version, $artifactName, $artifactPath);
 
             $signOutputs = $this->runActionWithOutputs(
                 __DIR__ . '/SignArtifactAction.php',
@@ -107,7 +107,7 @@ final class PublishFairAction
             $metadataPath = $metadataOutputs['metadata_path'] ?? '/tmp/fair-metadata.json';
 
             if ($uploadMetadata) {
-                $this->uploadMetadata($version, $metadataPath);
+                $this->uploadMetadata($repo, $version, $metadataPath);
             } else {
                 $this->runtime->logger()->notice('Skipping metadata upload (upload-metadata=false).');
             }
@@ -219,11 +219,14 @@ final class PublishFairAction
         return $value;
     }
 
-    private function downloadReleaseArtifact(string $version, string $artifactName, string $artifactPath): void
+    private function downloadReleaseArtifact(string $repo, string $version, string $artifactName, string $artifactPath): void
     {
         $this->runtime->logger()->group('Download release artifact');
         $this->runCommand(
-            'gh release download ' . escapeshellarg($version) . ' -p ' . escapeshellarg($artifactName) . ' -O ' . escapeshellarg($artifactPath),
+            'gh release download ' . escapeshellarg($version)
+            . ' --repo ' . escapeshellarg($repo)
+            . ' -p ' . escapeshellarg($artifactName)
+            . ' -O ' . escapeshellarg($artifactPath),
             'Download release artifact with gh'
         );
 
@@ -235,7 +238,7 @@ final class PublishFairAction
         $this->runtime->logger()->endGroup();
     }
 
-    private function uploadMetadata(string $version, string $metadataPath): void
+    private function uploadMetadata(string $repo, string $version, string $metadataPath): void
     {
         if (!file_exists($metadataPath)) {
             throw new \RuntimeException('Metadata upload failed: metadata file not found at ' . $metadataPath);
@@ -243,7 +246,10 @@ final class PublishFairAction
 
         $this->runtime->logger()->group('Upload metadata');
         $this->runCommand(
-            'gh release upload ' . escapeshellarg($version) . ' ' . escapeshellarg($metadataPath) . ' --clobber',
+            'gh release upload ' . escapeshellarg($version)
+            . ' --repo ' . escapeshellarg($repo)
+            . ' ' . escapeshellarg($metadataPath)
+            . ' --clobber',
             'Upload FAIR metadata to release'
         );
         $this->runtime->logger()->endGroup();
@@ -261,7 +267,7 @@ final class PublishFairAction
             throw new \RuntimeException('Could not create temporary output file for action step.');
         }
 
-        $mergedEnv = array_merge($_SERVER, $_ENV, $env, ['GITHUB_OUTPUT' => $outputFile]);
+        $mergedEnv = $this->buildProcessEnv(array_merge($env, ['GITHUB_OUTPUT' => $outputFile]));
 
         $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($scriptPath);
         $descriptorSpec = [
@@ -340,6 +346,34 @@ final class PublishFairAction
         }
 
         return $outputs;
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     *
+     * @return array<string, string>
+     */
+    private function buildProcessEnv(array $overrides): array
+    {
+        $merged = array_merge($_SERVER, $_ENV, $overrides);
+        $normalized = [];
+
+        foreach ($merged as $key => $value) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+
+            if (is_scalar($value) || $value === null) {
+                $normalized[$key] = (string) $value;
+                continue;
+            }
+
+            if ($value instanceof \Stringable) {
+                $normalized[$key] = (string) $value;
+            }
+        }
+
+        return $normalized;
     }
 
     private function runCommand(string $command, string $label, bool $ignoreFailure = false): string
