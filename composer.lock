@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7acb758d23ed3696c65185e8656e6a79",
+    "content-hash": "efceb8f1f7189676b0cc31ac372018cd",
     "packages": [
         {
             "name": "afragen/wordpress-plugin-readme-parser",
@@ -219,20 +219,21 @@
         },
         {
             "name": "fairpm/did-manager-wordpress",
-            "version": "0.0.2",
+            "version": "0.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fairpm/did-manager-wordpress.git",
-                "reference": "1e7888fc0c1ddc81cb1cf24c54cabdcbd1faf05c"
+                "reference": "ea41d4945b4a2411e9a3b37c6e1c8264d7101592"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fairpm/did-manager-wordpress/zipball/1e7888fc0c1ddc81cb1cf24c54cabdcbd1faf05c",
-                "reference": "1e7888fc0c1ddc81cb1cf24c54cabdcbd1faf05c",
+                "url": "https://api.github.com/repos/fairpm/did-manager-wordpress/zipball/ea41d4945b4a2411e9a3b37c6e1c8264d7101592",
+                "reference": "ea41d4945b4a2411e9a3b37c6e1c8264d7101592",
                 "shasum": ""
             },
             "require": {
                 "afragen/wordpress-plugin-readme-parser": "^1.2025.12",
+                "erusev/parsedown": "^1.7",
                 "ext-json": "*",
                 "fairpm/did-manager": "^0.0.3",
                 "php": ">=8.3"
@@ -261,9 +262,9 @@
             "description": "WordPress integration layer for FAIR DID management and metadata generation",
             "support": {
                 "issues": "https://github.com/fairpm/did-manager-wordpress/issues",
-                "source": "https://github.com/fairpm/did-manager-wordpress/tree/0.0.2"
+                "source": "https://github.com/fairpm/did-manager-wordpress/tree/0.0.3"
             },
-            "time": "2026-03-13T18:52:01+00:00"
+            "time": "2026-04-05T09:44:40+00:00"
         },
         {
             "name": "simplito/bigint-wrapper-php",
