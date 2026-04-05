@@ -18,10 +18,6 @@ inputs:
     description: Upload generated fair-metadata.json to the GitHub release.
     required: false
     default: 'true'
-  update-did-service:
-    description: Update DID service endpoint to point at uploaded fair-metadata.json.
-    required: false
-    default: 'true'
 
 outputs:
   version:
@@ -61,5 +57,4 @@ runs:
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_ARTIFACT_NAME: ${{ inputs.artifact-name }}
         INPUT_UPLOAD_METADATA: ${{ inputs.upload-metadata }}
-        INPUT_UPDATE_DID_SERVICE: ${{ inputs.update-did-service }}
         GITHUB_TOKEN: ${{ github.token }}

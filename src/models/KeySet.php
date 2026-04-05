@@ -7,8 +7,6 @@ namespace FairPulse\Models;
 final class KeySet
 {
     public function __construct(
-        public readonly string $rotationPrivate,
-        public readonly string $rotationPublic,
         public readonly string $verificationPrivate,
         public readonly string $verificationPublic,
         public readonly ?string $did,
