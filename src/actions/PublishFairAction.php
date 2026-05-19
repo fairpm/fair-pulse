@@ -343,10 +343,7 @@ final class PublishFairAction
     {
         $this->runtime->logger()->group($label);
 
-        $outputFile = tempnam(sys_get_temp_dir(), 'fair-output-');
-        if ($outputFile === false) {
-            throw new \RuntimeException('Could not create temporary output file for action step.');
-        }
+        $outputFile = $this->createStepOutputFile();
 
         $mergedEnv = $this->buildProcessEnv(array_merge($env, ['GITHUB_OUTPUT' => $outputFile]));
 
@@ -387,6 +384,55 @@ final class PublishFairAction
         $this->runtime->logger()->endGroup();
 
         return $parsed;
+    }
+
+    private function createStepOutputFile(): string
+    {
+        foreach ($this->stepOutputDirectories() as $directory) {
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                $path = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . 'fair-output-' . bin2hex(random_bytes(8));
+                $created = @file_put_contents($path, '');
+                if ($created !== false) {
+                    return $path;
+                }
+            }
+        }
+
+        throw new \RuntimeException('Could not create temporary output file for action step.');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function stepOutputDirectories(): array
+    {
+        $candidates = [];
+
+        $githubOutput = $this->runtime->env()->get('GITHUB_OUTPUT') ?? '';
+        if ($githubOutput !== '') {
+            $candidates[] = dirname($githubOutput);
+        }
+
+        $workspace = $this->runtime->env()->get('GITHUB_WORKSPACE') ?? '';
+        if ($workspace !== '') {
+            $candidates[] = $workspace;
+        }
+
+        $tempDir = sys_get_temp_dir();
+        if ($tempDir !== '') {
+            $candidates[] = $tempDir;
+        }
+
+        $directories = [];
+        foreach (array_unique($candidates) as $candidate) {
+            if (!is_string($candidate) || $candidate === '' || !is_dir($candidate) || !is_writable($candidate)) {
+                continue;
+            }
+
+            $directories[] = $candidate;
+        }
+
+        return $directories;
     }
 
     /**
