@@ -56,7 +56,7 @@ echo "unsupported gh command: $*" >&2
 exit 1
 BASH;
 
-        file_put_contents($ghPath, $ghScript);
+        $this->writeExecutableScript($ghPath, $ghScript);
         chmod($ghPath, 0755);
 
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-e2e-output-');
@@ -152,7 +152,7 @@ echo "unsupported gh command: $*" >&2
 exit 1
 BASH;
 
-        file_put_contents($ghPath, $ghScript);
+        $this->writeExecutableScript($ghPath, $ghScript);
         chmod($ghPath, 0755);
 
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-e2e-output-');
@@ -311,7 +311,7 @@ BASH;
     exit 1
     BASH;
 
-        file_put_contents($ghPath, $ghScript);
+        $this->writeExecutableScript($ghPath, $ghScript);
         chmod($ghPath, 0755);
 
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-e2e-output-');
@@ -391,7 +391,7 @@ echo "unsupported gh command: $*" >&2
 exit 1
 BASH;
 
-        file_put_contents($ghPath, $ghScript);
+        $this->writeExecutableScript($ghPath, $ghScript);
         chmod($ghPath, 0755);
 
         $outputFile = tempnam(sys_get_temp_dir(), 'fair-e2e-output-');
@@ -465,4 +465,9 @@ BASH;
         self::assertSame(1, $result->exitCode);
         self::assertStringContainsString('FAIR_DID is required', $result->stdout);
     }
+
+      private function writeExecutableScript(string $path, string $contents): void
+      {
+        file_put_contents($path, str_replace("\r\n", "\n", $contents));
+      }
 }

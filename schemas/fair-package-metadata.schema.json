@@ -1,0 +1,248 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://fair.pm/schemas/fair-package-metadata.schema.json",
+    "title": "FAIR Package Metadata",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "@context",
+        "id",
+        "type",
+        "name",
+        "slug",
+        "filename",
+        "last_updated",
+        "releases"
+    ],
+    "properties": {
+        "@context": {
+            "type": "string",
+            "const": "https://fair.pm/ns/metadata/v1"
+        },
+        "id": {
+            "type": "string",
+            "pattern": "^did:"
+        },
+        "type": {
+            "type": "string",
+            "enum": ["wp-plugin", "wp-theme"]
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1
+        },
+        "slug": {
+            "type": "string",
+            "minLength": 1
+        },
+        "filename": {
+            "type": "string",
+            "minLength": 1
+        },
+        "description": {
+            "type": "string"
+        },
+        "authors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name"],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri"
+                    }
+                }
+            }
+        },
+        "license": {
+            "type": "string",
+            "minLength": 1
+        },
+        "security": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri"
+                    }
+                },
+                "anyOf": [
+                    {
+                        "required": ["email"]
+                    },
+                    {
+                        "required": ["url"]
+                    }
+                ]
+            }
+        },
+        "keywords": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "string",
+                "minLength": 1
+            }
+        },
+        "sections": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "last_updated": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "releases": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/$defs/release"
+            }
+        }
+    },
+    "$defs": {
+        "release": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "version",
+                "requires",
+                "suggests",
+                "provides",
+                "artifacts"
+            ],
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "requires": {
+                    "$ref": "#/$defs/constraintMap"
+                },
+                "suggests": {
+                    "$ref": "#/$defs/constraintMap"
+                },
+                "provides": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "artifacts": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["package"],
+                    "properties": {
+                        "package": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "$ref": "#/$defs/packageArtifact"
+                            }
+                        },
+                        "icon": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "$ref": "#/$defs/imageArtifact"
+                            }
+                        },
+                        "banner": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                                "$ref": "#/$defs/imageArtifact"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "constraintMap": {
+            "type": "object",
+            "propertyNames": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9:_-]+$"
+            },
+            "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+            }
+        },
+        "packageArtifact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "url",
+                "content-type",
+                "signature",
+                "checksum"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "content-type": {
+                    "type": "string",
+                    "const": "application/zip"
+                },
+                "signature": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "checksum": {
+                    "type": "string",
+                    "pattern": "^sha256:[0-9a-f]{64}$"
+                }
+            }
+        },
+        "imageArtifact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "url",
+                "content-type",
+                "height",
+                "width"
+            ],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "content-type": {
+                    "type": "string",
+                    "pattern": "^image/"
+                },
+                "height": {
+                    "type": ["integer", "null"],
+                    "minimum": 1
+                },
+                "width": {
+                    "type": ["integer", "null"],
+                    "minimum": 1
+                }
+            }
+        }
+    }
+}
