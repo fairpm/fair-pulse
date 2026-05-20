@@ -49,10 +49,12 @@ final class GenerateMetadataScriptTest extends TestCase
         self::assertStringContainsString('metadata_path=/tmp/fair-metadata.json', $outputContent);
 
         $metadata = json_decode((string) file_get_contents('/tmp/fair-metadata.json'), true, 512, JSON_THROW_ON_ERROR);
+        $expectedSlug = basename($workspaceDir);
         self::assertSame('did:plc:metadata123', $metadata['id']);
         self::assertSame('https://fair.pm/ns/metadata/v1', $metadata['@context']);
         self::assertSame('wp-plugin', $metadata['type']);
-        self::assertSame('example-plugin/example-plugin.php', $metadata['filename']);
+        self::assertSame($expectedSlug, $metadata['slug']);
+        self::assertSame($expectedSlug . '/example-plugin.php', $metadata['filename']);
         self::assertSame('1.2.3', $metadata['releases'][0]['version']);
         self::assertSame('signature123', $metadata['releases'][0]['artifacts']['package'][0]['signature']);
         self::assertSame('sha256:' . str_repeat('a', 64), $metadata['releases'][0]['artifacts']['package'][0]['checksum']);
