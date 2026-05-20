@@ -236,7 +236,22 @@ final class MetadataGenerationService
             }
 
             if ($normalized !== []) {
-                return $normalized;
+                return $this->deduplicateEntries(
+                    $normalized,
+                    static fn (array $author): string => strtolower($author['name']),
+                    static function (array $existing, array $candidate): array {
+                        if (
+                            !isset($existing['url'])
+                            && isset($candidate['url'])
+                            && is_string($candidate['url'])
+                            && trim($candidate['url']) !== ''
+                        ) {
+                            $existing['url'] = trim($candidate['url']);
+                        }
+
+                        return $existing;
+                    }
+                );
             }
         }
 
@@ -251,7 +266,49 @@ final class MetadataGenerationService
             $normalized[0]['url'] = $authorUrl;
         }
 
-        return $normalized;
+        return $this->deduplicateEntries(
+            $normalized,
+            static fn (array $author): string => strtolower($author['name']),
+            static function (array $existing, array $candidate): array {
+                if (
+                    !isset($existing['url'])
+                    && isset($candidate['url'])
+                    && is_string($candidate['url'])
+                    && trim($candidate['url']) !== ''
+                ) {
+                    $existing['url'] = trim($candidate['url']);
+                }
+
+                return $existing;
+            }
+        );
+    }
+
+    private function deduplicateEntries(array $entries, callable $keyResolver, ?callable $mergeEntry = null): array
+    {
+        $deduplicated = [];
+        $entryIndexes = [];
+
+        foreach ($entries as $entry) {
+            $key = $keyResolver($entry);
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+
+            if (isset($entryIndexes[$key])) {
+                if ($mergeEntry !== null) {
+                    $index = $entryIndexes[$key];
+                    $deduplicated[$index] = $mergeEntry($deduplicated[$index], $entry);
+                }
+
+                continue;
+            }
+
+            $entryIndexes[$key] = count($deduplicated);
+            $deduplicated[] = $entry;
+        }
+
+        return $deduplicated;
     }
 
     private function normalizeLicense(mixed $license, array $headerData, array $readmeData): ?string
@@ -299,7 +356,17 @@ final class MetadataGenerationService
             }
 
             if ($normalized !== []) {
-                return $normalized;
+                return $this->deduplicateEntries(
+                    $normalized,
+                    static function (array $entry): string {
+                        $type = array_key_first($entry);
+                        if (!is_string($type) || !isset($entry[$type]) || !is_string($entry[$type])) {
+                            return '';
+                        }
+
+                        return $type . ':' . $entry[$type];
+                    }
+                );
             }
         }
 
@@ -339,7 +406,10 @@ final class MetadataGenerationService
             $normalized[] = $keyword;
         }
 
-        return array_values(array_unique($normalized));
+        return $this->deduplicateEntries(
+            $normalized,
+            static fn (string $keyword): string => $keyword,
+        );
     }
 
     private function normalizeSections(mixed $sections, string $description): array
