@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4b548063c693a71020fdd661437c824f",
+    "content-hash": "1f0647d6e781b4a0debc163c9c00d450",
     "packages": [
         {
             "name": "afragen/wordpress-plugin-readme-parser",
@@ -222,16 +222,16 @@
         },
         {
             "name": "fairpm/did-manager-wordpress",
-            "version": "0.0.6",
+            "version": "0.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fairpm/did-manager-wordpress.git",
-                "reference": "b77c55e2dff005f77f9878939df52ef81a657317"
+                "reference": "376b42c430dc84f15cc2d6e40122df8b6da6613a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fairpm/did-manager-wordpress/zipball/b77c55e2dff005f77f9878939df52ef81a657317",
-                "reference": "b77c55e2dff005f77f9878939df52ef81a657317",
+                "url": "https://api.github.com/repos/fairpm/did-manager-wordpress/zipball/376b42c430dc84f15cc2d6e40122df8b6da6613a",
+                "reference": "376b42c430dc84f15cc2d6e40122df8b6da6613a",
                 "shasum": ""
             },
             "require": {
@@ -268,9 +268,9 @@
             "description": "WordPress integration layer for FAIR DID management and metadata generation",
             "support": {
                 "issues": "https://github.com/fairpm/did-manager-wordpress/issues",
-                "source": "https://github.com/fairpm/did-manager-wordpress/tree/0.0.6"
+                "source": "https://github.com/fairpm/did-manager-wordpress/tree/0.0.7"
             },
-            "time": "2026-05-19T17:57:49+00:00"
+            "time": "2026-05-20T08:07:43+00:00"
         },
         {
             "name": "simplito/bigint-wrapper-php",
@@ -2210,10 +2210,10 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": {},
-    "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
 }
