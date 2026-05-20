@@ -36,6 +36,7 @@ final class MetadataGenerationService
 
         $artifactFilename = basename($artifactPath);
         $releaseUrl = $repoUrl . "/releases/download/{$version}/{$artifactFilename}";
+        $packageSlug = basename(rtrim($workDir, '/\\'));
 
         $metadata = $this->normalizeMetadata(
             $generator->generate(),
@@ -43,6 +44,7 @@ final class MetadataGenerationService
             $version,
             $checksum,
             $signature,
+            $packageSlug,
             $mainPluginFile,
             $releaseUrl,
             $headerData,
@@ -60,15 +62,19 @@ final class MetadataGenerationService
         string $version,
         string $checksum,
         string $signature,
+        string $packageSlug,
         string $mainPluginFile,
         string $releaseUrl,
         array $headerData,
         array $readmeData,
     ): array {
-        $slug = $this->firstString(
-            $rawMetadata,
-            ['slug']
-        );
+        $slug = trim($packageSlug);
+        if ($slug === '') {
+            $slug = $this->firstString(
+                $rawMetadata,
+                ['slug']
+            );
+        }
         if ($slug === '') {
             $slug = $this->firstString($headerData, ['text_domain', 'TextDomain']);
         }
