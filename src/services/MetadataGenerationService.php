@@ -70,16 +70,10 @@ final class MetadataGenerationService
     ): array {
         $slug = trim($packageSlug);
         if ($slug === '') {
-            $slug = $this->firstString(
-                $rawMetadata,
-                ['slug']
-            );
-        }
-        if ($slug === '') {
-            $slug = $this->firstString($headerData, ['text_domain', 'TextDomain']);
-        }
-        if ($slug === '') {
             $slug = pathinfo($mainPluginFile, PATHINFO_FILENAME);
+        }
+        if ($slug === '') {
+            throw new \RuntimeException('Could not determine package slug from workspace or plugin file.');
         }
 
         $name = $this->firstString($rawMetadata, ['name']);
