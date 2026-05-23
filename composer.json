@@ -13,7 +13,7 @@
         }
     },
     "require": {
-        "fairpm/did-manager-wordpress": "0.0.7"
+        "fairpm/did-manager-wordpress": "0.0.8"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5"
