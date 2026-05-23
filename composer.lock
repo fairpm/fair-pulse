@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1f0647d6e781b4a0debc163c9c00d450",
+    "content-hash": "f8d17c7b2d237041a1d1707000ae0451",
     "packages": [
         {
             "name": "afragen/wordpress-plugin-readme-parser",
@@ -222,16 +222,16 @@
         },
         {
             "name": "fairpm/did-manager-wordpress",
-            "version": "0.0.7",
+            "version": "0.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fairpm/did-manager-wordpress.git",
-                "reference": "376b42c430dc84f15cc2d6e40122df8b6da6613a"
+                "reference": "ae4149376560e8aba6959471df16b8632e5d62aa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fairpm/did-manager-wordpress/zipball/376b42c430dc84f15cc2d6e40122df8b6da6613a",
-                "reference": "376b42c430dc84f15cc2d6e40122df8b6da6613a",
+                "url": "https://api.github.com/repos/fairpm/did-manager-wordpress/zipball/ae4149376560e8aba6959471df16b8632e5d62aa",
+                "reference": "ae4149376560e8aba6959471df16b8632e5d62aa",
                 "shasum": ""
             },
             "require": {
@@ -268,9 +268,9 @@
             "description": "WordPress integration layer for FAIR DID management and metadata generation",
             "support": {
                 "issues": "https://github.com/fairpm/did-manager-wordpress/issues",
-                "source": "https://github.com/fairpm/did-manager-wordpress/tree/0.0.7"
+                "source": "https://github.com/fairpm/did-manager-wordpress/tree/0.0.8"
             },
-            "time": "2026-05-20T08:07:43+00:00"
+            "time": "2026-05-23T00:55:11+00:00"
         },
         {
             "name": "simplito/bigint-wrapper-php",
